@@ -1,0 +1,110 @@
+﻿<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/web/thymeleaf/layout"
+>
+
+<head>
+    <meta th:include="admin/includes/header::header(title='数据中心')">
+</head>
+<body>
+
+<div id="pageWrapper" style="height: 95%; overflow-y: auto; overflow-x: hidden;">
+    <div class="header">
+        <div class="topnav" id="topnav">
+            <div class="top-panel">
+                <h1>
+                    <a class="logo" href="javascript:;">数据中心</a>
+                </h1>
+
+                <ul class="top-menu">
+                    <li class="topModule" th:each="m,mStat:${session.module}"
+                        th:classappend="${m.eName==session.selectedModule.ename} ? 'cur'">
+                        <a class="all-product-link-item" data-event="nav" th:moduleId="${m.id}" th:name="${m.eName}">
+                            <i class="ico-server"></i><span>[[${m.cName}]]</span>
+                        </a>
+                    </li>
+                </ul>
+
+                <ul class="top-menu" style="float: right">
+                    <li id="userInfo" data-event="top_submenu" data-menu-type="user"
+                        style="position: relative" class="" data-menu-inited="true">
+                        <a data-event="nav" data-hot="header.user.center">[[${session.loginUser.userName}]]<i
+                                class="top-menu-arrows"></i></a>
+
+                        <div class="drop-down-layer product-service user-profile">
+                            <dl class="service-menu" style="margin:0px;">
+                                <dd><a id="_resetPwd" href="javascript:void(0);">修改密码</a></dd>
+                                <dd th:if="${session.loginUser.admin == true}"><a href="javascript:void(0);">切换用户</a>
+                                </dd>
+                                <dd><a href="/adminLogin/logout" data-event="logout">退出</a></dd>
+                            </dl>
+                        </div>
+                    </li>
+
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <div class="container" id="container" style="left: 0px;">
+        <div class="aside" id="sidebar">
+            <div class="menu" id="leftMenu">
+                <h2>[[${session.selectedModule.cname}]]</h2>
+                <hr class="line-mod">
+                <dl class="menu-list def-scroll keyboard-focus-obj">
+
+                    <dd th:each="m,mStat:${session.selectedModule.menu}">
+                        <a class="menu-lv2 " data-event="nav"
+                           th:classappend="${m.checked==true} ? 'on'"
+                           th:parent="${m.parentId}" th:moudle="${session.selectedModule.ename}"
+                           th:ename="${m.eName}"
+                           th:href="|/${session.selectedModule.ename}${m.viewUrl}|"><span>[[${m.cName}]] </span></a>
+                    </dd>
+
+                </dl>
+            </div>
+        </div>
+
+        <div class="main" id="appArea" layout:fragment="appArea"></div>
+    </div>
+</div>
+
+
+<footer style="text-align: center;">
+    <p class="copyright">Copyright © 2008-2015 杭州XX科技有限公司0.0</p>
+    <div th:remove="tag" th:include="admin/includes/footer::footer"></div>
+
+    <script th:inline="javascript">
+
+        $(function () {
+
+            $("#_resetPwd").click(function () {
+                $('#userDialog').createDialog({
+                    width: 600,
+                    height: 250,
+                    title: '修改运维人员',
+                    url: '/adminUserManage/rePwd?id=' + [[${session.loginUser.id}]],
+                    buttons: {
+                        "保存": function () {
+                            $("#maintainForm").submit();
+                        },
+                        "关闭": function () {
+                            $(this).dialog("close");
+                        }
+                    }
+                });
+            });
+
+        });
+
+
+    </script>
+
+</footer>
+
+
+<footer layout:fragment="footer" style="display: none;">
+
+</footer>
+
+</body>
+</html>

@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.student.mapper.ScoreMapper">
+    <resultMap id="scoreMap" type="com.student.pojo.score.ScoreModel">
+
+        <result column="score_uid" property="scoreUid"/>
+        <result column="student_uid" property="studentUid"/>
+        <result column="class_uid" property="classUid"/>
+        <result column="course_uid" property="courseUid"/>
+        <result column="term_uid" property="termUid"/>
+
+        <result column="score" property="score"/>
+
+        <result column="student_name" property="studentName"/>
+        <result column="course_name" property="courseName"/>
+        <result column="term_name" property="termName"/>
+
+        <result column="class_rank" property="classRank"/>
+        <result column="total_score" property="totalScore"/>
+        <result column="average_score" property="averageScore"/>
+        <result column="class_name" property="className"/>
+
+        <result column="created_at" property="createdAt"/>
+        <result column="updated_at" property="updatedAt"/>
+        <result column="created_by" property="createdBy"/>
+        <result column="updated_by" property="updatedBy"/>
+    </resultMap>
+
+    <select id="listStudentScore" parameterType="com.student.pojo.score.ScoreRequestDTO" resultMap="scoreMap">
+        SELECT a.*,c.course_name,b.student_name,d.term_name,e.class_name
+        FROM st_score a
+        JOIN st_student b ON a.student_uid = b.student_uid
+        JOIN st_course c ON a.course_uid = c.course_uid
+        JOIN st_term d ON d.term_uid = a.term_uid
+        JOIN st_class e ON e.class_uid = b.class_uid
+        WHERE 1=1
+        <if test="studentUid != null and studentUid !='' ">
+            AND a.student_uid = #{studentUid}
+        </if>
+        <if test="courseUid != null and courseUid !='' ">
+            AND c.course_uid = #{courseUid}
+        </if>
+        <if test="termUid != null and termUid !='' ">
+            AND d.term_uid = #{termUid}
+        </if>
+        <if test="classUid != null and classUid !='' ">
+            AND e.class_uid = #{classUid}
+        </if>
+        ORDER BY a.score desc
+        LIMIT #{page},#{limit}
+    </select>
+
+    <select id="countStudentScore" parameterType="com.student.pojo.score.ScoreRequestDTO" resultType="java.lang.Integer">
+        SELECT COUNT(1)
+        FROM st_score a
+        JOIN st_student b ON a.student_uid = b.student_uid
+        JOIN st_course c ON a.course_uid = c.course_uid
+        JOIN st_term d ON d.term_uid = a.term_uid
+        JOIN st_term f ON f.term_uid = a.term_uid
+        WHERE 1=1
+        <if test="studentUid != null and studentUid !='' ">
+            AND a.student_uid = #{studentUid}
+        </if>
+        <if test="courseUid != null and courseUid !='' ">
+            AND c.course_uid = #{courseUid}
+        </if>
+        <if test="termUid != null and termUid !='' ">
+            AND d.term_uid = #{termUid}
+        </if>
+    </select>
+
+    <select id="listClassScore" parameterType="com.student.pojo.score.ScoreRequestDTO" resultMap="scoreMap">
+        SELECT
+        ee.score_uid,
+        ee.class_uid,
+        ee.total_score,
+        ee.term_uid,
+        ee.term_name,
+        (@classRank :=@classRank + 1) AS class_rank,
+        ee.class_name,
+        ee.average_score
+        FROM
+        (SELECT
+        a.score_uid, a.student_uid, b.class_uid,
+        SUM(a.score) AS total_score,
+        AVG(a.score) as average_score,
+        f.term_uid,f.term_name,d.class_name
+        FROM
+        st_score a
+        JOIN st_student b ON a.student_uid = b.student_uid
+        JOIN st_course c ON a.course_uid = c.course_uid
+        JOIN st_class d ON b.class_uid = d.class_uid
+        JOIN st_term f ON f.term_uid = a.term_uid
+        where 1=1
+        <if test="termUid != null and termUid !='' ">
+            AND f.term_uid = #{termUid}
+        </if>
+        GROUP BY d.class_uid
+        ORDER BY SUM(a.score) DESC
+        LIMIT #{page},#{limit}) ee
+        JOIN (SELECT(@classRank := 0)) e
+    </select>
+
+    <select id="countClassScore" parameterType="com.student.pojo.score.ScoreRequestDTO" resultType="java.lang.Integer">
+        SELECT COUNT(1)
+        FROM (
+        select a.*
+        FROM
+        st_score a
+        JOIN st_student b ON a.student_uid = b.student_uid
+        JOIN st_course c ON a.course_uid = c.course_uid
+        JOIN st_class d ON b.class_uid = d.class_uid
+        WHERE 1=1
+        <if test="studentUid != null and studentUid !='' ">
+            AND a.student_uid = #{studentUid}
+        </if>
+        <if test="classUid != null and classUid !='' ">
+            AND d.class_uid = #{classUid}
+        </if>
+        GROUP BY d.class_uid
+        ) result
+    </select>
+
+    <insert id="createStudentScore" parameterType="com.student.pojo.student.StudentModel">
+        insert into st_score
+        (score_uid,score,student_uid,course_uid,term_uid,created_at,updated_at,created_by,updated_by)
+        VALUES
+        (st_uuid_short(),#{score},#{studentUid},#{courseUid},#{termUid},now(),now(),#{createdBy},#{updatedBy})
+    </insert>
+
+    <delete id="deleteStudentScore">
+        delete
+        FROM st_score
+        where score_uid = #{scoreUid}
+    </delete>
+
+    <update id="updateStudentScore" parameterType="com.student.pojo.student.StudentModel">
+        update st_score
+        SET updated_at = now()
+        <if test="score != null and score !='' ">
+            , score = #{score}
+        </if>
+        where score_uid = #{scoreUid};
+    </update>
+
+</mapper>

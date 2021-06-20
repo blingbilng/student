@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.student.mapper.CourseMapper">
+
+    <resultMap id="courseMap" type="com.student.pojo.course.CourseModel">
+
+        <result column="course_uid" property="courseUid"/>
+        <result column="course_name" property="courseName"/>
+
+        <result column="created_at" property="createdAt"/>
+        <result column="updated_at" property="updatedAt"/>
+        <result column="created_by" property="createdBy"/>
+        <result column="updated_by" property="updatedBy"/>
+    </resultMap>
+
+    <insert id="createCourse" parameterType="com.student.pojo.course.CourseModel">
+		insert into st_course
+		(course_uid,course_name,created_at,updated_at,created_by,updated_by)
+		VALUES
+		(st_uuid_short(),#{courseName},now(),now(),#{createdBy},#{updatedBy})
+	</insert>
+
+    <select id="listCourse" parameterType="com.student.pojo.course.CourseRequestDTO"
+            resultMap="courseMap">
+        select *
+        from st_course
+        where 1=1
+        <if test="courseName != null and courseName !=' ' ">
+            AND course_name LIKE CONCAT('%', #{courseName}, '%')
+        </if>
+        <if test="courseUid != null and courseUid !=' ' ">
+            AND course_uid =${courseUid}
+        </if>
+        ORDER BY id desc
+        LIMIT #{page},#{limit}
+    </select>
+
+
+    <select id="countCourse" parameterType="com.student.pojo.course.CourseRequestDTO"
+            resultType="java.lang.Integer">
+        SELECT COUNT(*)
+        from st_course
+        where 1=1
+        <if test="courseName != null and courseName !=' ' ">
+            AND course_name LIKE CONCAT('%', #{courseName}, '%')
+        </if>
+        <if test="courseUid != null and courseUid !=' ' ">
+            AND course_uid =${courseUid}
+        </if>
+    </select>
+
+    <delete id="deleteCourse">
+        delete
+        FROM st_course
+        where course_uid = #{courseUid}
+    </delete>
+
+    <update id="updateCourse" parameterType="com.student.pojo.course.CourseModel">
+        update st_course
+        SET updated_at = now(),course_name=#{courseName}
+        where course_uid = #{courseUid};
+    </update>
+</mapper>

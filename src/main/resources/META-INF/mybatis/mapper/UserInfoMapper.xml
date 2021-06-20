@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.student.mapper.UserInfoMapper">
+
+    <resultMap id="userInfoMap" type="com.student.pojo.user.UserInfoModel">
+        <result column="user_uid" property="userUid"/>
+        <result column="user_name" property="userName"/>
+        <result column="login_name" property="loginName"/>
+        <result column="password" property="password"/>
+        <result column="user_phone" property="userPhone"/>
+        <result column="user_type" property="userType"/>
+        <result column="avatar" property="avatar"/>
+
+        <result column="created_at" property="createdAt"/>
+        <result column="updated_at" property="updatedAt"/>
+        <result column="created_by" property="createdBy"/>
+        <result column="updated_by" property="updatedBy"/>
+    </resultMap>
+    <select id="getUserInfo" parameterType="com.student.pojo.user.UserInfoRequestDTO"
+            resultMap="userInfoMap">
+        select *
+        from st_user
+        where 1=1
+        <if test="loginName != null and loginName != '' ">
+            AND login_name =#{loginName}
+        </if>
+        <if test="userUid != null and userUid != '' ">
+            AND user_uid = #{userUid}
+        </if>
+    </select>
+
+    <insert id="createUserInfo" parameterType="com.student.pojo.user.UserInfoModel">
+        insert into st_user
+        (user_uid,user_name,login_name,password,user_phone,user_type
+        ,avatar,created_at,updated_at,created_by,updated_by)
+        VALUES
+        (#{userUid},#{userName},#{loginName},#{password},#{userPhone},#{userType}
+        ,#{avatar},now(),now(),#{createdBy},#{updatedBy})
+    </insert>
+
+
+</mapper>

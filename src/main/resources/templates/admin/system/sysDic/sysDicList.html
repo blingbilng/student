@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{admin/newLayout}">
+
+<body  >
+
+<div layout:fragment="body" style="margin-left: 20px; padding: 10px;" >
+    <div class="demoTable">
+        搜索字典：
+        <div class="layui-inline">
+            <input class="layui-input" name="text" id="demoReload" autocomplete="off">
+        </div>
+
+        <button class="layui-btn" data-type="reload">搜索</button>
+    </div>
+    <table id="dicTable" class="layui-hide"  ></table>
+</div>
+
+
+</body>
+
+<footer layout:fragment="footer" style="display: none;">
+    <script>
+        layui.use('table', function(){
+            var $ = layui.$;
+            var table = layui.table;
+            var $table= table.render({
+                elem: '#dicTable'
+                ,method:'post'
+                ,url: '/propertyDictionaryManange/pageDictionaryDomain' //设置异步接口
+                ,cols: [
+                    [
+                        {field: 'id', title: 'ID', width:80, sort: true, fixed: 'left'},
+                        {field: "internal",   title: '字典内置码', sort: false  },
+                        {field: "text",       title: '字典名', sort: false },
+                        {field: "remark",     title: '备注',   sort: false }
+                    ]
+                ]
+                ,page: true //是否显示分页
+                ,limit: 20 //每页默认显示的数量
+                ,where: {"layTable":true}
+
+                ,request: {
+                    pageName: 'page' //页码的参数名称，默认：page
+                    ,limitName: 'rows' //每页数据量的参数名，默认：limit
+                }
+                ,id: 'testReload'
+            });
+
+            var  active = {
+                reload: function(){
+                    var text = $('#demoReload').val();
+                    if (!text){
+                        return ;
+                    }
+                    //执行重载
+                    table.reload('testReload', {
+                        page: {
+                            curr: 1 //重新从第 1 页开始
+                        }
+                        ,where: {
+                            text: text
+                        }
+                    });
+                }
+            };
+
+            $('.demoTable .layui-btn').on('click', function(){
+                var type = $(this).data('type');
+                active[type] ? active[type].call(this) : '';
+            });
+
+        });
+
+
+
+    </script>
+
+</footer>
+</html>

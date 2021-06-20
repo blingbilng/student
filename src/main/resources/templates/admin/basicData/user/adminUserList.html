@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{admin/newLayout}">
+
+
+<body  >
+
+<div layout:fragment="body" style="margin-left: 20px; padding: 10px;" >
+
+    <div>
+        <div class="layui-inline">
+            <input class="layui-input" name="text" id="searchText" autocomplete="off">
+        </div>
+        <button class="layui-btn" data-type="reload">搜索</button>
+        <button class="layui-btn layui-btn-normal createUser">新增</button>
+        <button class="layui-btn layui-btn-normal batchDeleteUser">批量删除</button>
+        <button class="layui-btn layui-btn-normal reflashUser">刷新</button>
+    </div>
+    <table id="userTable" lay-filter="userTable" class="layui-hide"  ></table>
+</div>
+
+
+</body>
+
+
+<footer layout:fragment="footer" >
+    <script type="text/html" id="isAdminTpl">
+        {{ d.admin == true ? "是":"否" }}
+    </script>
+
+    <script type="text/html" id="createAdminTpl">
+        <div>
+            <form class="layui-form" action="">
+                <div class="layui-form-item">
+                    <label class="layui-form-label">用户名</label>
+                    <div class="layui-input-inline">
+                        <input type="text" name="userName" lay-verify="userName"  autocomplete="off" placeholder="请输入用户名" class="layui-input">
+                    </div>
+                </div>
+                <div class="layui-form-item">
+                    <label class="layui-form-label">登录名</label>
+                    <div class="layui-input-inline">
+                        <input type="text" name="loginName" lay-verify="loginName"  placeholder="请输入登录名" autocomplete="off" class="layui-input">
+                    </div>
+                </div>
+
+                <div class="layui-form-item">
+                    <label class="layui-form-label">手机</label>
+                    <div class="layui-input-inline">
+                        <input type="tel" name="mobile" lay-verify="required|mobile"  maxlength="11" placeholder="请输入手机"  autocomplete="off" class="layui-input">
+                    </div>
+                </div>
+
+                <div class="layui-form-item">
+                    <label class="layui-form-label">密码</label>
+                    <div class="layui-input-inline">
+                        <input type="password" name="password" lay-verify="required|password"  placeholder="请输入密码" autocomplete="off" class="layui-input">
+                    </div>
+                </div>
+
+
+                <div class="layui-form-item" >
+                    <label class="layui-form-label">是否管理员</label>
+                    <div class="layui-input-inline">
+                        <input type="radio" name="admin" value="1"   title="是">
+                        <input type="radio" name="admin" value="0"   title="否" checked>
+                    </div>
+                </div>
+
+                <div class="layui-form-item">
+                    <div class="layui-input-block">
+                        <button class="layui-btn" lay-submit="" lay-filter="userForm">立即提交</button>
+                        <button type="reset" class="layui-btn layui-btn-primary">重置</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </script>
+
+    <script type="text/html" id="editAdminTpl">
+        <div>
+            <form class="layui-form" action="">
+
+                <div class="layui-form-item">
+                    <label class="layui-form-label">用户名</label>
+                    <div class="layui-input-inline">
+                        <input type="hidden" name="id"   value="{{d.id}}"  >
+                        <input type="text" name="userName" lay-verify="userName" value="{{d.userName}}" autocomplete="off" placeholder="请输入用户名" class="layui-input">
+                    </div>
+                </div>
+                <div class="layui-form-item">
+                    <label class="layui-form-label">登录名</label>
+                    <div class="layui-input-inline">
+                        <input type="text" name="loginName" lay-verify="loginName" value="{{d.loginName}}"  placeholder="请输入登录名" autocomplete="off" class="layui-input">
+                    </div>
+                </div>
+
+                <div class="layui-form-item">
+                    <label class="layui-form-label">手机</label>
+                    <div class="layui-input-inline">
+                        <input type="tel" name="mobile" lay-verify="required|mobile" value="{{d.mobile}}"  maxlength="11" placeholder="请输入手机"  autocomplete="off" class="layui-input">
+                    </div>
+                </div>
+
+                <div class="layui-form-item" >
+                    <label class="layui-form-label">是否管理员</label>
+                    <div class="layui-input-inline">
+                        {{#  if(d.admin=="true" ){ }}
+                        <input type="radio" name="admin" value="1"  checked   title="是" >
+                        <input type="radio" name="admin" value="0"    title="否" >
+                        {{#  } else { }}
+                        <input type="radio" name="admin" value="1"     title="是" >
+                        <input type="radio" name="admin" value="0"  checked  title="否" >
+                        {{#  } }}
+                    </div>
+                </div>
+
+                <div class="layui-form-item">
+                    <div class="layui-input-block">
+                        <button class="layui-btn" lay-submit="" lay-filter="userForm">立即提交</button>
+                        <button type="reset" class="layui-btn layui-btn-primary">重置</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </script>
+
+    <script type="text/html" id="barDemo">
+        <a class="layui-btn layui-btn-xs" lay-event="edit">编辑</a>
+        <a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="del">删除</a>
+    </script>
+
+    <script>
+
+
+        layui.use(['table', 'layer', 'laytpl','form', 'layedit', 'laydate'], function(){
+            var table = layui.table;
+            var $ = layui.jquery;
+            var laytpl = layui.laytpl;
+            var form = layui.form
+                ,layer = layui.layer
+                ,layedit = layui.layedit
+                ,laydate = layui.laydate;
+
+
+            table.render({
+                elem: '#userTable'
+                ,method:'post'
+                ,url: '/adminUserManage/findAdminUserList' //设置异步接口
+                ,cols: [
+                    [
+                        {type: 'checkbox', fixed: 'left'},
+                        {field: "",        title: "操作", sort: false,align:'center', toolbar: '#barDemo'},
+                        {field: "userName",title: '用户名', sort: false,},
+                        {field: "loginName",    title: '登录名', sort: false},
+                        {field: "mobile",  title: '手机', sort: false},
+                        {field: "admin",   title: '超级管理员', sort: false, templet: '#isAdminTpl'}
+
+                    ]
+                ]
+                ,page: true //是否显示分页
+                ,limit: 20 //每页默认显示的数量
+                ,where: {"layTable":true}
+
+                ,request: {
+                    pageName: 'page' //页码的参数名称，默认：page
+                    ,limitName: 'rows' //每页数据量的参数名，默认：limit
+                }
+                ,id: 'testReload'
+            });
+
+            //自定义验证规则
+            form.verify({
+                userName: function(value){
+                    if(!value || value.length==0){
+                        return '请输入用户名';
+                    }
+                },
+
+                loginName: function(value){
+                    if(!value || value.length==0){
+                        return '请输入登录名';
+                    }
+                }
+                ,mobile: [/^1[3|4|5|7|8]\d{9}$/, '手机必须11位，只能是数字！']
+                ,password: [/^[A-Za-z0-9]{6,20}$/, '请输入6-20数字和字母的组合！']
+            });
+
+
+            form.on('radio', function(data){
+                console.log(data);
+            });
+
+            //监听提交
+            form.on('submit(userForm)', function(data){
+
+                var url = "/adminUserManage/addAdminUser";
+                if (data.field.id){
+                    url = "/adminUserManage/updateAdminUser";
+                }
+
+                $.ajax({
+                    method: "POST",
+                    url: url,
+                    data:  JSON.stringify(data.field) ,
+                    contentType: 'application/json',
+                    dataType: 'json'
+                })
+                    .then(function (res) {
+                        if (res && res.code == 200 ) {
+                            layer.alert("新增成功!");
+                            layer.closeAll();
+                            table.reload('testReload', {
+                                page: {curr: 1}
+                                ,where: {"userName": ""}
+                            });
+                        }else {
+                            layer.alert("新增失败!")
+                        }
+                    })
+                    .fail(function () {
+                        layer.alert("新增失败!")
+                    })
+                ;
+                return false;
+            });
+
+            var  active = {
+                reload: function(){
+                    var text = $('#searchText').val();
+                    if (!text){
+                        return ;
+                    }
+                    //执行重载
+                    table.reload('testReload', {
+                        page: {
+                            curr: 1 //重新从第 1 页开始
+                        }
+                        ,where: {
+                            "userName": text
+                        }
+                    });
+                }
+            };
+
+            $('.demoTable .layui-btn').on('click', function(){
+                var type = $(this).data('type');
+                active[type] ? active[type].call(this) : '';
+            });
+
+            $('.createUser').on('click', function(){
+                layer.open({
+                    type: 1,
+                    area: ['500px', '400px'],
+                    content: $('#createAdminTpl').html() //这里content是一个普通的String
+                });
+                form.render(); //更新全部
+            });
+
+            function deleteUser(id) {
+                var ids = [id];
+                var data =  JSON.stringify( ids );
+
+                return  $.ajax({
+                    method: "DELETE",
+                    url: "/adminUserManage/deleteAdminUsers",
+                    data: data,
+                    contentType: 'application/json',
+                    dataType: 'json'
+                })
+                    .fail(function () {
+                        layer.alert("新增失败!")
+                    });
+
+            }
+
+            //监听工具条
+            table.on('tool(userTable)', function(row){
+                var data = row.data;
+                if(row.event === 'detail'){
+                    layer.msg('ID：'+ data.id + ' 的查看操作');
+                } else if(row.event === 'del'){
+                    layer.confirm('真的删除行么', function(index){
+                        deleteUser(data.id).then(function (res) {
+                            if (res && res.code == 200) {
+                                row.del();
+                            }else {
+                                layer.alert("删除失败!")
+                            }
+                        })
+
+                        layer.close(index);
+                    });
+                } else if(row.event === 'edit'){
+                    //layer.alert('编辑行：<br>'+ JSON.stringify(data))
+
+                    console.log(data)
+                    var html =$('#editAdminTpl').html();
+                    //或者同步写法
+                    html =  laytpl(html).render( data );
+                    layer.open({
+                        type: 1,
+                        area: ['500px', '400px'],
+                        content:html
+                    });
+                }
+            });
+
+        });
+
+
+
+    </script>
+
+</footer>
+</html>

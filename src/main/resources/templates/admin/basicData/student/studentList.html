@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{admin/newLayout}">
+
+<body>
+
+<div layout:fragment="body" style="margin-left: 20px; padding: 10px;">
+    <div class="formDiv" style="width: 100%; height:40px;">
+        <div class="layui-inline">
+            <input class="layui-input" name="text" placeholder="请输入学号" id="studentNoText" autocomplete="off">
+        </div>
+        <div class="layui-inline">
+            <input class="layui-input" name="text" placeholder="请输入姓名" id="studentNameText" autocomplete="off">
+        </div>
+        <button class="layui-btn" data-type="reload">搜索</button>
+        <button class="layui-btn layui-btn-normal create" data-type="create">新增</button>
+    </div>
+
+    <table id="studentTable" lay-filter="studentTable" class="layui-hide"></table>
+</div>
+
+</body>
+
+<footer layout:fragment="footer" style="display: none;">
+
+    <script type="text/html" id="createTpl">
+        <div style="margin-top:20px;">
+            <form class="layui-form" action="">
+                <div class="layui-form-item">
+                    <label class="layui-form-label">学号</label>
+                    <div class="layui-input-inline">
+                        <input type="text" name="student_no" lay-verify="student_no" autocomplete="off"
+                               placeholder="请输入学号" class="layui-input">
+                    </div>
+                </div>
+                <div class="layui-form-item">
+                    <label class="layui-form-label">姓名</label>
+                    <div class="layui-input-inline">
+                        <input type="text" name="student_name" lay-verify="student_name" autocomplete="off"
+                               placeholder="请输入姓名" class="layui-input">
+                    </div>
+                </div>
+
+                <div class="layui-form-item">
+                    <label class="layui-form-label">手机号码</label>
+                    <div class="layui-input-inline">
+                        <input type="text" name="student_phone" lay-verify="student_phone" placeholder="请输入手机号码"
+                               autocomplete="off" class="layui-input">
+                    </div>
+                </div>
+
+                <div class="layui-form-item">
+                    <label class="layui-form-label">邮箱</label>
+                    <div class="layui-input-inline">
+                        <input type="text" name="student_email" lay-verify="student_email" placeholder="请输入邮箱"
+                               autocomplete="off"
+                               class="layui-input">
+                    </div>
+                </div>
+
+                <div class="layui-form-item">
+                    <label class="layui-form-label">班级</label>
+                    <div class="layui-inline">
+                        <select name="class_uid" lay-filter="class_uid" lay-search>
+                            <option value="">请选择班级</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="layui-form-item">
+                    <div class="layui-input-block">
+                        <button class="layui-btn" lay-submit="" lay-filter="studentForm">立即提交</button>
+                        <button type="reset" class="layui-btn layui-btn-primary">重置</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </script>
+
+    <script type="text/html" id="editTpl">
+        <div>
+            <form class="layui-form" action="">
+
+                <div class="layui-form-item">
+                    <label class="layui-form-label">学号</label>
+                    <div class="layui-input-inline">
+                        <input type="hidden" name="student_uid" value="{{d.student_uid}}">
+                        <input type="text" name="student_no" lay-verify="student_no" value="{{d.student_no}}"
+                               placeholder="请输入学号" autocomplete="off" class="layui-input">
+                    </div>
+                </div>
+                <div class="layui-form-item">
+                    <label class="layui-form-label">姓名</label>
+                    <div class="layui-input-inline">
+                        <input type="text" name="student_name" lay-verify="student_name" value="{{d.student_name}}"
+                               autocomplete="off" placeholder="请输入姓名" class="layui-input">
+                    </div>
+                </div>
+                <div class="layui-form-item">
+                    <label class="layui-form-label">手机号码</label>
+                    <div class="layui-input-inline">
+                        <input type="text" name="student_phone" lay-verify="student_phone" value="{{d.student_phone}}"
+                               placeholder="请输入手机号码" autocomplete="off" class="layui-input">
+                    </div>
+                </div>
+
+                <div class="layui-form-item">
+                    <label class="layui-form-label">邮箱</label>
+                    <div class="layui-input-inline">
+                        <input type="text" name="student_email" lay-verify="student_email" value="{{d.student_email}}"
+                               placeholder="请输入邮箱"
+                               autocomplete="off" class="layui-input">
+                    </div>
+                </div>
+
+
+                <div class="layui-form-item">
+                    <div class="layui-input-block">
+                        <button class="layui-btn" lay-submit="" lay-filter="studentForm">立即提交</button>
+                        <button type="reset" class="layui-btn layui-btn-primary">重置</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+    </script>
+    <script type="text/html" id="chooseTpl">
+        <div>
+            <form class="layui-form" action="">
+
+                <div class="layui-form-item">
+                    <div class="layui-form-item">
+                        <label class="layui-form-label">班级</label>
+                        <div class="layui-inline">
+                            <input type="hidden" name="student_uid" value="{{d.student_uid}}">
+                            <select name="class_uid" lay-filter="class_uid" lay-search>
+                                <option value="{{d.class_uid}}" selected>{{d.class_name}}</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="layui-input-block">
+                        <button class="layui-btn" lay-submit="" lay-filter="studentForm">立即提交</button>
+                        <button type="reset" class="layui-btn layui-btn-primary">重置</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </script>
+    <script type="text/html" id="bar">
+        <a class="layui-btn layui-btn-xs" lay-event="edit">编辑</a>
+        <a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="del">删除</a>
+        <a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="choose">选择班级</a>
+    </script>
+
+
+    <script type="text/html" id="treeTpl">
+        <div style="display: inline-block;   padding: 10px;  overflow: auto;">
+            <ul id="tree"></ul>
+        </div>
+    </script>
+
+    <script>
+
+
+        layui.use(['table', 'tree'], function () {
+            var table = layui.table;
+            var $ = layui.jquery;
+            var laytpl = layui.laytpl;
+            var form = layui.form
+                , layer = layui.layer;
+
+            // 获取班级
+            function getClass(classUid) {
+                console.log(classUid);
+                return $.ajax({
+                    type: "post",
+                    url: '/pageClass',
+                    dataType: "json",
+                    contentType: "application/json",
+                    data: {limit: 10000}
+                })
+                    .then(function (res) {
+                        if (!res.data || res.data.length == 0) {
+                            return
+                        }
+                        var tag_options = res.data.map(function (opt) {
+                            console.log(opt.class_uid);
+                            if (classUid == opt.class_uid) {
+                                return laytpl("<option value='{{d.class_uid}}' selected>{{d.class_name}}</option>").render(opt);
+                            } else {
+                                return laytpl("<option value='{{d.class_uid}}' >{{d.class_name}}</option>").render(opt);
+                            }
+                        });
+                        $("select[name = 'class_uid']").html('<option value="">请选择班级</option>').append(tag_options);
+                        form.render();
+                    })
+                    .fail(function (e) {
+                    })
+            }
+
+
+            table.render({
+                elem: '#studentTable'
+                , method: 'post'
+                , url: '/pageStudent'
+                , cols: [
+                    [
+                        {
+                            field: "student_uid",
+                            sort: false,
+                            width: '0%',
+                            minWidth: '0%',
+                            space: true,
+                            style: 'display:none'
+                        },
+                        {
+                            field: "class_uid",
+                            sort: false,
+                            width: '0%',
+                            minWidth: '0%',
+                            space: true,
+                            style: 'display:none'
+                        },
+                        {field: "student_no", title: '学号', sort: false, unresize: true, fixed: 'center'},
+                        {
+                            field: "student_name",
+                            title: '姓名',
+                            sort: false,
+                            unresize: true,
+                            fixed: 'center'
+                        },
+                        {
+                            field: "student_phone",
+                            title: '手机号码',
+                            sort: false,
+                            unresize: true,
+                            fixed: 'center'
+                        },
+                        {
+                            field: "student_email",
+                            title: '邮箱',
+                            sort: false,
+                            unresize: true,
+                            fixed: 'center'
+                        },
+                        {
+                            field: "class_name",
+                            title: '班级',
+                            sort: false,
+                            unresize: true,
+                            fixed: 'center'
+                        },
+                        {
+                            field: "",
+                            title: "操作",
+                            sort: false,
+                            align: 'center',
+                            unresize: true,
+                            toolbar: '#bar'
+                        }
+                    ]
+                ]
+                , page: true //是否显示分页
+                , limit: 20 //每页默认显示的数量
+                , where: {
+                    "layTable": true
+                }
+                , id: 'studentReload'
+            });
+
+            //自定义验证规则
+            form.verify({
+                student_no: function (value) {
+                    if (!value || value.length == 0) {
+                        return '请输入学号';
+                    }
+                },
+                student_name: function (value) {
+                    if (!value || value.length == 0) {
+                        return '请输入姓名';
+                    }
+                },
+                student_phone: function (value) {
+                    if (!value || value.length == 0) {
+                        return '请输入手机号码';
+                    }
+                },
+                student_email: function (value) {
+                    if (!value || value.length == 0) {
+                        return '请输入邮箱';
+                    }
+                }
+            });
+
+            //监听提交
+            form.on('submit(studentForm)', function (data) {
+
+                var url = "/createStudent";
+                if (data.field.student_uid) {
+                    url = "/updateStudent";
+                }
+
+                $.ajax({
+                    method: "POST",
+                    url: url,
+                    data: JSON.stringify(data.field),
+                    contentType: 'application/json',
+                    dataType: 'json'
+                })
+                    .then(function (res) {
+                        if (res && res.code == 200) {
+                            layer.alert("新增成功!");
+                            layer.closeAll();
+                            table.reload('studentReload', {
+                                page: {curr: 1}
+                            });
+                        } else {
+                            layer.alert("新增失败!")
+                        }
+                    })
+                    .fail(function () {
+                        layer.alert("新增失败!")
+                    })
+                ;
+                return false;
+            });
+
+            var active = {
+                reload: function () {
+                    var studentNo = $('#studentNoText').val();
+                    var studentName = $('#studentNameText').val();
+                    //执行重载
+                    table.reload('studentReload', {
+                        page: {
+                            curr: 1 //重新从第 1 页开始
+                        }
+                        , where: {
+                            studentName: studentName,
+                            studentNo: studentNo
+                        }
+                    });
+                }
+                , create: function () {
+                    layer.open({
+                        type: 1,
+                        title: "新增",
+                        area: ['500px', '400px'],
+                        content: $('#createTpl').html() //这里content是一个普通的String
+                    });
+                    getClass('null');
+                    form.render(); //更新全部
+                }
+                , batchDelete: function () {
+
+                }
+                , choose: function (obj) {
+                    var data = obj.data;
+                    var html = $('#chooseTpl').html();
+                    //或者同步写法
+                    html = laytpl(html).render(data);
+                    layer.open({
+                        type: 1,
+                        area: ['500px', '350px'],
+                        content: html
+                    });
+                    getClass(data.class_uid);
+                    form.render(); //更新全部
+
+                }
+                , edit: function (obj) {
+                    var data = obj.data;
+                    var html = $('#editTpl').html();
+                    //或者同步写法
+                    html = laytpl(html).render(data);
+                    layer.open({
+                        type: 1,
+                        area: ['500px', '350px'],
+                        content: html
+                    });
+                }
+                , del: function (obj) {
+                    var data = obj.data;
+                    layer.confirm('真的删除行么', function (index) {
+                        var temp = {
+                            student_uid: data.student_uid //页面大小
+                        };
+                        $.ajax({
+                            method: "POST",
+                            url: "/deleteStudent",
+                            data: JSON.stringify(temp),
+                            contentType: 'application/json',
+                            dataType: 'json'
+                        })
+                            .then(function (res) {
+                                if (res && res.code == 200) {
+                                    obj.del();
+                                } else {
+                                    layer.alert("删除失败!")
+                                }
+                            })
+                            .fail(function () {
+                                layer.alert("新增失败!")
+                            });
+
+                        layer.close(index);
+                    });
+                }
+            };
+
+            $('body .layui-btn').on('click', function () {
+                var type = $(this).data('type');
+                active[type] ? active[type].call(this) : '';
+            });
+
+            //监听工具条
+            table.on('tool(studentTable)', function (obj) {
+                var _event = obj.event;
+                active[_event] ? active[_event].call(this, obj) : '';
+            });
+        });
+
+
+    </script>
+
+</footer>
+</html>

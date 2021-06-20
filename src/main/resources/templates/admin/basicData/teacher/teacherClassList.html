@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{admin/newLayout}">
+
+<body>
+
+<div layout:fragment="body" style="margin-left: 20px; padding: 10px;">
+    <div class="formDiv" style="width: 100%; height:80px;">
+        <form class="layui-form">
+            <div class="layui-inline">
+                <select name="class" lay-filter="class" lay-search>
+                    <option value="">请选择班级</option>
+                </select>
+            </div>
+            <div class="layui-inline">
+                <select name="teacher" lay-filter="teacher" lay-search>
+                    <option value="">请选择教师</option>
+                </select>
+            </div>
+        </form>
+        <button class="layui-btn layui-btn-normal create" data-type="create">新增</button>
+    </div>
+
+    <table id="teacherClassTable" lay-filter="teacherClassTable" class="layui-hide"></table>
+</div>
+
+
+</body>
+
+<footer layout:fragment="footer" style="display: none;">
+
+    <script type="text/html" id="bar">
+        <a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="del">删除</a>
+    </script>
+
+    <script type="text/html" id="createTpl">
+        <div style="margin-top:20px;">
+            <form class="layui-form" action="">
+
+                <div class="layui-form-item">
+                    <label class="layui-form-label">教师</label>
+                    <div class="layui-inline">
+                        <select name="teacher_uid" lay-filter="teacher_uid" lay-search>
+                            <option value="">请选择教师</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="layui-form-item">
+                    <label class="layui-form-label">班级</label>
+                    <div class="layui-inline">
+                        <select name="class_uid" lay-filter="class_uid" lay-search>
+                            <option value="">请选择班级</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="layui-form-item">
+                    <div class="layui-input-block">
+                        <button class="layui-btn" lay-submit="" lay-filter="teacherForm">立即提交</button>
+                        <button type="reset" class="layui-btn layui-btn-primary">重置</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </script>
+
+    <script type="text/html" id="treeTpl">
+        <div style="display: inline-block;   padding: 10px;  overflow: auto;">
+            <ul id="tree"></ul>
+        </div>
+    </script>
+
+    <script>
+        layui.use(['table', 'tree'], function () {
+            var table = layui.table;
+            var $ = layui.jquery;
+            var laytpl = layui.laytpl;
+            var form = layui.form
+                , layer = layui.layer;
+
+            table.render({
+                elem: '#teacherClassTable'
+                , method: 'post'
+                , url: '/pageTeacherClass'
+                , cols: [
+                    [
+                        {
+                            field: "teacher_class_rel_uid",
+                            sort: false,
+                            width: '0%',
+                            minWidth: '0%',
+                            space: true,
+                            style: 'display:none'
+                        },
+                        {field: "teacher_name", title: '教师名称', sort: false, unresize: true, fixed: 'center'},
+                        {field: "class_name", title: '班级', sort: false, unresize: true, fixed: 'center'},
+                        {field: "", title: "操作", sort: false, align: 'center', unresize: true, toolbar: '#bar'}
+                    ]
+                ]
+                , page: true //是否显示分页
+                , limit: 20 //每页默认显示的数量
+                , where: {"layTable": true}
+
+                , id: 'teacherClassReload'
+            });
+
+            //监听提交
+            form.on('submit(teacherForm)', function (data) {
+
+                $.ajax({
+                    method: "POST",
+                    url: "createTeacherClassRel",
+                    data: JSON.stringify(data.field),
+                    contentType: 'application/json',
+                    dataType: 'json'
+                })
+                    .then(function (res) {
+                        console.log(res);
+                        if (res && res.code == 200) {
+                            layer.alert("新增成功!");
+                            layer.closeAll();
+                            table.reload('teacherClassReload', {
+                                page: {curr: 1}
+                            });
+                            form.render();
+                        } else {
+                            layer.alert("新增失败!")
+                        }
+                    })
+                    .fail(function () {
+                        layer.alert("新增失败!")
+                    })
+                ;
+                return false;
+            });
+
+            var active = {
+                reload: function () {
+                    var text = $('#searchText').val();
+                    if (!text) {
+                        return;
+                    }
+                    //执行重载
+                    table.reload('teacherClassReload', {
+                        page: {
+                            curr: 1 //重新从第 1 页开始
+                        }
+                        , where: {
+                            teacherName: text
+                        }
+                    });
+                }
+                , create: function (obj) {
+                    getccTeacher()
+                    layer.open({
+                        type: 1,
+                        title: "新增",
+                        area: ['500px', '350px'],
+                        content: $('#createTpl').html() //这里content是一个普通的String
+                    });
+                    form.render(); //更新全部
+                }
+                , del: function (obj) {
+                    var data = obj.data;
+                    layer.confirm('真的删除行么', function (index) {
+                        var temp = {
+                            teacher_class_rel_uid: data.teacher_class_rel_uid //页面大小
+                        };
+                        $.ajax({
+                            method: "POST",
+                            url: "/deleteTeacherClass",
+                            data: JSON.stringify(temp),
+                            contentType: 'application/json',
+                            dataType: 'json'
+                        })
+                            .then(function (res) {
+                                if (res && res.code == 200) {
+                                    obj.del();
+                                } else {
+                                    layer.alert("删除失败!")
+                                }
+                            })
+                            .fail(function () {
+                                layer.alert("删除失败!")
+                            });
+
+                        layer.close(index);
+                    });
+                }
+            };
+
+            // 获取班级
+            function getClass() {
+                return $.ajax({
+                    type: "post",
+                    url: '/pageClass',
+                    dataType: "json",
+                    contentType: "application/json",
+                    data: {limit: 100000}
+                })
+                    .then(function (res) {
+                        console.log(res);
+                        if (!res.data || res.data.length == 0) {
+                            return
+                        }
+                        var tag_options = res.data.map(function (opt) {
+                            console.log(opt);
+                            return laytpl("<option value='{{d.class_uid}}'>{{d.class_name}}</option>").render(opt);
+                        });
+                        console.log(tag_options);
+                        $("select[name = 'class']").append(tag_options);
+                        form.render('select');
+                    })
+                    .fail(function (e) {
+                        console.log(e);
+                    })
+            }
+
+            // 获取班级
+            function getTeacherClass(teacherUid) {
+                return $.ajax({
+                    type: "post",
+                    url: '/pageClass',
+                    dataType: "json",
+                    contentType: "application/json",
+                    data: {limit: 100000, teacher_uid: teacherUid}
+                })
+                    .then(function (res) {
+                        console.log(res);
+                        if (!res.data || res.data.length == 0) {
+                            return
+                        }
+                        var tag_options = res.data.map(function (opt) {
+                            if (teacherUid != opt.class_teacher_uid) {
+                                return laytpl("<option value='{{d.class_uid}}' >{{d.class_name}}</option>").render(opt);
+                            }
+                        });
+
+                        $("select[name = 'class_uid']").append(tag_options);
+                        form.render('select');
+                    })
+                    .fail(function (e) {
+                        console.log(e);
+                    })
+            }
+
+            getClass();
+
+
+            //事件监听
+            form.on('select(class)', function (data) {
+                table.reload('teacherClassReload', {
+                    page: {
+                        curr: 1 //重新从第 1 页开始
+                    }
+                    , where: {
+                        classUid: data.value
+                    }
+                });
+            });
+
+
+            // 获取教师
+            function getTeacher() {
+                return $.ajax({
+                    type: "post",
+                    url: '/pageTeacher',
+                    dataType: "json",
+                    contentType: "application/json",
+                    data: {limit: 10000}
+                })
+                    .then(function (res) {
+                        if (!res.data || res.data.length == 0) {
+                            return
+                        }
+                        var tag_options = res.data.map(function (opt) {
+                            return laytpl("<option value='{{d.teacher_uid}}' >{{d.teacher_name}}</option>").render(opt);
+                        });
+                        $("select[name = 'teacher']").append(tag_options);
+                        $("select[name = 'teacher_uid']").append(tag_options);
+                        form.render('select');
+                    })
+                    .fail(function (e) {
+                    })
+            }
+            // 获取教师
+            function getccTeacher() {
+                return $.ajax({
+                    type: "post",
+                    url: '/pageTeacher',
+                    dataType: "json",
+                    contentType: "application/json",
+                    data: {limit: 10000}
+                })
+                    .then(function (res) {
+                        if (!res.data || res.data.length == 0) {
+                            return
+                        }
+                        var tag_options = res.data.map(function (opt) {
+                            return laytpl("<option value='{{d.teacher_uid}}' >{{d.teacher_name}}</option>").render(opt);
+                        });
+                        $("select[name = 'teacher_uid']").append(tag_options);
+                        form.render('select');
+                    })
+                    .fail(function (e) {
+                    })
+            }
+
+            getTeacher()
+            form.on('select(teacher)', function (data) {
+                table.reload('teacherClassReload', {
+                    page: {
+                        curr: 1 //重新从第 1 页开始
+                    }
+                    , where: {
+                        teacherUid: data.value
+                    }
+                });
+            });
+
+            form.on('select(teacher_uid)', function (data) {
+                getTeacherClass(data.value);
+            });
+
+            $('body .layui-btn').on('click', function () {
+                var type = $(this).data('type');
+                active[type] ? active[type].call(this) : '';
+            });
+
+            //监听工具条
+            table.on('tool(teacherClassTable)', function (obj) {
+                var _event = obj.event;
+                active[_event] ? active[_event].call(this, obj) : '';
+            });
+        });
+
+
+    </script>
+
+</footer>
+</html>

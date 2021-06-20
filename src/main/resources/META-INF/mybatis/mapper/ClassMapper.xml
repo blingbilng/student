@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.student.mapper.ClassMapper">
+
+    <resultMap id="classMap" type="com.student.pojo.classs.ClassModel">
+
+        <result column="class_uid" property="classUid"/>
+        <result column="class_number" property="classNumber"/>
+        <result column="class_name" property="className"/>
+        <result column="class_teacher_uid" property="classTeacherUid"/>
+        <result column="class_teacher_name" property="classTeacherName"/>
+
+        <result column="created_at" property="createdAt"/>
+        <result column="updated_at" property="updatedAt"/>
+        <result column="created_by" property="createdBy"/>
+        <result column="updated_by" property="updatedBy"/>
+    </resultMap>
+
+    <insert id="createClass" parameterType="com.student.pojo.classs.ClassModel">
+        <selectKey order="BEFORE" statementType="STATEMENT" keyProperty="classUid" resultType="java.lang.String">
+            select st_uuid_short()
+        </selectKey>
+        insert into st_class
+        (class_uid,class_number,class_name,class_teacher_uid,created_at,updated_at,created_by,updated_by)
+        VALUES
+        (#{classUid},#{classNumber},#{className},#{classTeacherUid},now(),now(),#{createdBy},#{updatedBy})
+    </insert>
+
+    <insert id="createTeacherClassRel">
+		insert into st_teacher_class_rel
+		(teacher_class_rel_uid,teacher_uid,class_uid,created_at,updated_at)
+		VALUES
+		(st_uuid_short(),#{teacherUid},#{classUid},now(),now())
+	</insert>
+
+    <select id="listClass" parameterType="com.student.pojo.classs.ClassRequestDTO" resultMap="classMap">
+        select a.class_name,a.class_uid,a.class_teacher_uid,c.teacher_name AS class_teacher_name,
+        (
+        select count(1)
+        from st_class class
+        JOIN st_student student ON class.class_uid = student.class_uid
+        where class.class_uid = a.class_uid
+        )AS class_number
+        from st_class a
+        LEFT JOIN st_teacher_class_rel b ON a.class_uid = b.class_uid
+        LEFT JOIN st_teacher c ON b.teacher_uid = c.teacher_uid
+        where 1=1
+        <if test="className != null and className !='' ">
+            AND a.class_name = #{className}
+        </if>
+        <if test="teacherUid != null and teacherUid !='' ">
+            AND b.teacher_uid = #{teacherUid}
+        </if>
+        ORDER BY a.id desc
+        LIMIT #{page},#{limit}
+    </select>
+
+    <select id="getClass" resultMap="classMap">
+        select a.*,c.teacher_name AS class_teacher_name
+        from st_class a
+        JOIN st_teacher_class_rel b ON a.class_uid = b.class_uid
+        JOIN st_teacher c ON b.teacher_uid = c.teacher_uid
+        where r.class_uid = #{classUid}
+    </select>
+
+    <select id="countClass" parameterType="com.student.pojo.classs.ClassRequestDTO"
+            resultType="java.lang.Integer">
+        SELECT COUNT(*)
+        from st_class a
+        LEFT JOIN st_teacher_class_rel b ON a.class_uid = b.class_uid
+        LEFT JOIN st_teacher c ON b.teacher_uid = c.teacher_uid
+        where 1=1
+        <if test="className != null and className !='' ">
+            AND a.class_name = #{className}
+        </if>
+        <if test="teacherUid != null and teacherUid !='' ">
+            AND b.teacher_uid = #{teacherUid}
+        </if>
+    </select>
+
+    <delete id="deleteClass">
+        delete
+        FROM st_class
+        where class_uid = #{classUid}
+    </delete>
+
+    <delete id="deleteTeacherClassRel">
+        delete
+        FROM st_teacher_class_rel
+        where class_uid = #{classUid}
+    </delete>
+
+    <update id="updateClass" parameterType="com.student.pojo.classs.ClassModel">
+        update st_class
+        SET updated_at = now()
+        <if test="className != null and className !='' ">
+            , class_name = #{className}
+        </if>
+        <if test="classTeacherUid != null and classTeacherUid !='' ">
+            , class_teacher_uid = #{classTeacherUid}
+        </if>
+        where class_uid = #{classUid};
+    </update>
+
+</mapper>

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE configuration PUBLIC "-//mybatis.org//DTD Config 3.0//EN" "http://mybatis.org/dtd/mybatis-3-config.dtd">
+<configuration>
+
+    <typeAliases>
+        <package name="com.student.pojo"/>
+    </typeAliases>
+
+    <mappers>
+        <mapper resource="META-INF/mybatis/mapper/UserInfoMapper.xml"/>
+        <mapper resource="META-INF/mybatis/mapper/PermissionsMapper.xml"/>
+        <mapper resource="META-INF/mybatis/mapper/StudentMapper.xml"/>
+        <mapper resource="META-INF/mybatis/mapper/TeacherMapper.xml"/>
+        <mapper resource="META-INF/mybatis/mapper/ClassMapper.xml"/>
+        <mapper resource="META-INF/mybatis/mapper/CourseMapper.xml"/>
+        <mapper resource="META-INF/mybatis/mapper/ScoreMapper.xml"/>
+        <mapper resource="META-INF/mybatis/mapper/TermMapper.xml"/>
+    </mappers>
+
+</configuration>

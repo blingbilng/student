@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{admin/newLayout}">
+
+<body>
+
+<div layout:fragment="body" style="margin-left: 20px; padding: 10px;">
+    <div class="formDiv" style="width: 100%; height:40px;">
+        <form class="layui-form">
+            <div class="layui-inline">
+                <select name="course" lay-filter="course" lay-search>
+                    <option value="">请选择课程</option>
+                </select>
+            </div>
+        </form>
+        <button class="layui-btn layui-btn-normal create" data-type="create"
+                style="position:relative ;top: -38px;left: 240px ;">新增
+        </button>
+    </div>
+
+    <table id="courseTable" lay-filter="courseTable" class="layui-hide"></table>
+</div>
+
+</body>
+
+<footer layout:fragment="footer" style="display: none;">
+
+    <script type="text/html" id="createTpl">
+        <div style="margin-top:20px;">
+            <form class="layui-form" action="">
+                <div class="layui-form-item">
+                    <label class="layui-form-label">课程名</label>
+                    <div class="layui-input-inline">
+                        <input type="text" name="course_name" lay-verify="course_name" autocomplete="off"
+                               placeholder="请输入课程名" class="layui-input">
+                    </div>
+                </div>
+
+                <div class="layui-form-item">
+                    <div class="layui-input-block">
+                        <button class="layui-btn" lay-submit="" lay-filter="courseForm">立即提交</button>
+                        <button type="reset" class="layui-btn layui-btn-primary">重置</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </script>
+
+    <script type="text/html" id="editTpl">
+        <div>
+            <form class="layui-form" action="">
+
+                <div class="layui-form-item">
+                    <label class="layui-form-label">课程名</label>
+                    <div class="layui-input-inline">
+                        <input type="hidden" name="course_uid" value="{{d.course_uid}}">
+                        <input type="text" name="course_name" lay-verify="course_name" value="{{d.course_name}}"
+                               autocomplete="off"
+                               placeholder="请输入课程名" class="layui-input">
+                    </div>
+                </div>
+
+                <div class="layui-form-item">
+                    <div class="layui-input-block">
+                        <button class="layui-btn" lay-submit="" lay-filter="courseForm">立即提交</button>
+                        <button type="reset" class="layui-btn layui-btn-primary">重置</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </script>
+
+    <script type="text/html" id="bar">
+        <a class="layui-btn layui-btn-xs" lay-event="edit">编辑</a>
+        <a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="del">删除</a>
+    </script>
+
+
+    <script type="text/html" id="treeTpl">
+        <div style="display: inline-block;   padding: 10px;  overflow: auto;">
+            <ul id="tree"></ul>
+        </div>
+    </script>
+
+    <script>
+        layui.use(['table', 'tree'], function () {
+            var table = layui.table;
+            var $ = layui.jquery;
+            var laytpl = layui.laytpl;
+            var form = layui.form
+                , layer = layui.layer;
+
+            // 获取课程
+            function getCourse() {
+                return $.ajax({
+                    type: "post",
+                    url: '/pageCourse',
+                    dataType: "json",
+                    contentType: "application/json",
+                    data: {limit: 10000}
+                })
+                    .then(function (res) {
+                        if (!res.data || res.data.length == 0) {
+                            return
+                        }
+                        var tag_options = res.data.map(function (opt) {
+                            return laytpl("<option value='{{d.course_uid}}'>{{d.course_name}}</option>").render(opt);
+                        });
+                        console.log(tag_options);
+                        $("select[name = 'course']").html('<option value="">请选择课程</option>').append(tag_options);
+                        form.render();
+                    })
+                    .fail(function (e) {
+                        console.log(e);
+                    })
+            }
+
+            getCourse();
+
+            table.render({
+                elem: '#courseTable'
+                , method: 'post'
+                , url: '/pageCourse'
+                , cols: [
+                    [
+                        {
+                            field: "course_uid",
+                            sort: false,
+                            width: '0%',
+                            minWidth: '0%',
+                            space: true,
+                            style: 'display:none'
+                        },
+                        {
+                            field: "course_name",
+                            title: '课程名',
+                            sort: false,
+                            unresize: true,
+                            fixed: 'center'
+                        },
+                        {
+                            field: "",
+                            title: "操作",
+                            sort: false,
+                            align: 'center',
+                            unresize: true,
+                            toolbar: '#bar'
+                        }
+                    ]
+                ]
+                , page: true //是否显示分页
+                , limit: 20 //每页默认显示的数量
+                , where: {"layTable": true}
+                , text: {
+                    none: '暂无相关数据' //默认：无数据。注：该属性为 layui 2.2.5 开始新增
+                }
+                , id: 'courseReload'
+            });
+
+            //自定义验证规则
+            form.verify({
+                course_name: function (value) {
+                    if (!value || value.length == 0) {
+                        return '请输入课程名';
+                    }
+                }
+            });
+
+            //监听提交
+            form.on('submit(courseForm)', function (data) {
+
+                var url = "/createCourse";
+                if (data.field.course_uid) {
+                    url = "/updateCourse";
+                }
+
+                $.ajax({
+                    method: "POST",
+                    url: url,
+                    data: JSON.stringify(data.field),
+                    contentType: 'application/json',
+                    dataType: 'json'
+                })
+                    .then(function (res) {
+                        console.log(res);
+                        if (res && res.code == 200) {
+                            layer.alert("新增成功!");
+                            layer.closeAll();
+                            table.reload('courseReload', {
+                                page: {curr: 1}
+                            });
+                            getCourse();
+                        } else {
+                            layer.alert("新增失败!")
+                        }
+                    })
+                    .fail(function () {
+                        layer.alert("新增失败!")
+                    })
+                ;
+                return false;
+            });
+
+            var active = {
+                reload: function () {
+                    var text = $('#searchText').val();
+                    if (!text) {
+                        return;
+                    }
+                    //执行重载
+                    table.reload('courseReload', {
+                        page: {
+                            curr: 1 //重新从第 1 页开始
+                        }
+                        , where: {
+                            CourseName: text
+                        }
+                    });
+                }
+                , create: function () {
+                    layer.open({
+                        type: 1,
+                        title: "新增",
+                        area: ['500px', '350px'],
+                        content: $('#createTpl').html() //这里content是一个普通的String
+                    });
+                    form.render(); //更新全部
+                }
+                , batchDelete: function () {
+
+                }
+                , edit: function (obj) {
+                    var data = obj.data;
+                    console.log(data);
+                    var html = $('#editTpl').html();
+                    //或者同步写法
+                    html = laytpl(html).render(data);
+                    console.log(html);
+                    layer.open({
+                        type: 1,
+                        area: ['500px', '350px'],
+                        content: html
+                    });
+                }
+                , del: function (obj) {
+                    var data = obj.data;
+                    layer.confirm('真的删除行么', function (index) {
+                        var temp = {
+                            course_uid: data.course_uid
+                        };
+                        $.ajax({
+                            method: "POST",
+                            url: "/deleteCourse",
+                            data: JSON.stringify(temp),
+                            contentType: 'application/json',
+                            dataType: 'json'
+                        })
+                            .then(function (res) {
+                                if (res && res.code == 200) {
+                                    obj.del();
+                                } else {
+                                    layer.alert("删除失败!")
+                                }
+                            })
+                            .fail(function () {
+                                layer.alert("新增失败!")
+                            });
+
+                        layer.close(index);
+                    });
+                }
+            };
+
+            //事件监听
+            form.on('select', function (data) {
+                table.reload('courseReload', {
+                    page: {
+                        curr: 1 //重新从第 1 页开始
+                    }
+                    , where: {
+                        courseUid: data.value
+                    }
+                });
+            });
+            $('body .layui-btn').on('click', function () {
+                var type = $(this).data('type');
+                active[type] ? active[type].call(this) : '';
+            });
+
+            //监听工具条
+            table.on('tool(courseTable)', function (obj) {
+                var _event = obj.event;
+                active[_event] ? active[_event].call(this, obj) : '';
+            });
+        });
+
+
+    </script>
+
+</footer>
+</html>

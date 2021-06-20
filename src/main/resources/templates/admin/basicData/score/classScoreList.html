@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{admin/newLayout}">
+
+<body>
+
+<div layout:fragment="body" style="margin-left: 20px; padding: 10px;">
+    <div>
+
+        <form class="layui-form">
+            <div class="layui-inline">
+                <select name="term" lay-filter="term" lay-search>
+                    <option value="">请选择学期</option>
+                </select>
+            </div>
+            <div class="layui-inline">
+                <select name="class" lay-filter="class" lay-search>
+                    <option value="">请选择班级</option>
+                </select>
+            </div>
+        </form>
+    </div>
+
+    <table id="classScoreReload" lay-filter="classScoreReload" class="layui-hide"></table>
+</div>
+
+</body>
+
+<footer layout:fragment="footer" style="display: none;">
+
+
+    <script>
+        layui.use(['table', 'tree'], function () {
+            var table = layui.table;
+            var laytpl = layui.laytpl;
+            var $ = layui.jquery;
+            var form = layui.form;
+
+
+            // 获取班级
+            function getClass() {
+                return $.ajax({
+                    type: "post",
+                    url: '/pageClass',
+                    dataType: "json",
+                    contentType: "application/json",
+                    data: {limit: 100000}
+                })
+                    .then(function (res) {
+                        console.log(res);
+                        if (!res.data || res.data.length == 0) {
+                            return
+                        }
+                        var tag_options = res.data.map(function (opt) {
+                            console.log(opt);
+                            return laytpl("<option value='{{d.class_uid}}'>{{d.class_name}}</option>").render(opt);
+                        });
+                        console.log(tag_options);
+                        $("select[name = 'class']").append(tag_options);
+                        form.render('select');
+                    })
+                    .fail(function (e) {
+                        console.log(e);
+                    })
+            }
+
+            getClass();
+
+            // 获取学期
+            function pageTerm() {
+                return $.ajax({
+                    type: "post",
+                    url: '/pageTerm',
+                    dataType: "json",
+                    contentType: "application/json",
+                    data: {limit: 10000}
+                })
+                    .then(function (res) {
+                        if (!res.data || res.data.length == 0) {
+                            return
+                        }
+                        var tag_options = res.data.map(function (opt) {
+                            return laytpl("<option value='{{d.term_uid}}'>{{d.term_name}}</option>").render(opt);
+                        });
+                        $("select[name = 'term']").html('<option value="">请选择学期</option>').append(tag_options);
+                        form.render();
+                    })
+                    .fail(function (e) {
+                        console.log(e);
+                    })
+            }
+
+            pageTerm();
+            table.render({
+                elem: '#classScoreReload'
+                , method: 'post'
+                , url: '/pageClassScore'
+                , cols: [
+                    [
+                        {
+                            field: "score_uid",
+                            sort: false,
+                            width: '0%',
+                            minWidth: '0%',
+                            space: true,
+                            style: 'display:none'
+                        },
+                        {
+                            field: "student_uid",
+                            sort: false,
+                            width: '0%',
+                            minWidth: '0%',
+                            space: true,
+                            style: 'display:none'
+                        },
+                        {
+                            field: "term_uid",
+                            sort: false,
+                            width: '0%',
+                            minWidth: '0%',
+                            space: true,
+                            style: 'display:none'
+                        },
+                        {
+                            field: "class_uid",
+                            sort: false,
+                            width: '0%',
+                            minWidth: '0%',
+                            space: true,
+                            style: 'display:none'
+                        },
+                        {
+                            field: "term_name",
+                            title: '学期',
+                            sort: false,
+                            unresize: true,
+                            fixed: 'center'
+                        },
+                        {
+                            field: "class_name",
+                            title: '班级',
+                            sort: false,
+                            unresize: true,
+                            fixed: 'center'
+                        },
+                        {
+                            field: "average_score",
+                            title: '平均分',
+                            sort: true,
+                            unresize: true,
+                            fixed: 'center'
+                        },
+                        {
+                            field: "class_rank",
+                            title: '排名',
+                            sort: false,
+                            unresize: true,
+                            fixed: 'center'
+                        }
+                    ]
+                ]
+                , page: true //是否显示分页
+                , limit: 10 //每页默认显示的数量
+                , where: {
+                    "layTable": true
+                }
+                , text: {
+                    none: '暂无相关数据' //默认：无数据。注：该属性为 layui 2.2.5 开始新增
+                }
+                , id: 'classScoreReload'
+            });
+
+
+            var active = {
+                reload: function () {
+                    var text = $('#searchText').val();
+                    if (!text) {
+                        return;
+                    }
+                    //执行重载
+                    table.reload('classScoreReload', {
+                        page: {
+                            curr: 1 //重新从第 1 页开始
+                        }
+                    });
+                }
+            };
+            //事件监听
+            form.on('select(term)', function (data) {
+                table.reload('classScoreReload', {
+                    page: {
+                        curr: 1 //重新从第 1 页开始
+                    }
+                    , where: {
+                        termUid: data.value
+                    }
+                });
+            });
+
+            //事件监听
+            form.on('select(class)', function (data) {
+                table.reload('classScoreReload', {
+                    page: {
+                        curr: 1 //重新从第 1 页开始
+                    }
+                    , where: {
+                        classUid: data.value
+                    }
+                });
+            });
+
+            $('body .layui-btn').on('click', function () {
+                var type = $(this).data('type');
+                active[type] ? active[type].call(this) : '';
+            });
+
+        });
+
+
+    </script>
+
+</footer>
+</html>
